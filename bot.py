@@ -13,7 +13,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Your bot token
-TOKEN = 'YOUR_BOT_TOKEN_HERE'
+TOKEN = '7240209800:AAFnyLI0VPIYWB3sVAR84UUztLnokNQjUhE'
 
 # Dictionary to store user choices
 user_choices = {}
