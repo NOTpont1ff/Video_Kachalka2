@@ -1,9 +1,9 @@
 import logging
 import os
-import signal
 import sys
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, MessageHandler, ContextTypes, CallbackQueryHandler, filters
+from moviepy.editor import AudioFileClip, VideoFileClip
 import yt_dlp
 
 # Enable logging
@@ -13,7 +13,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Your bot token
-TOKEN = '7240209800:AAFnyLI0VPIYWB3sVAR84UUztLnokNQjUhE'
+TOKEN = 'YOUR_BOT_TOKEN_HERE'
 
 # Dictionary to store user choices
 user_choices = {}
@@ -54,44 +54,19 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
     await query.edit_message_text(f'Качается {format_choice.upper()}...')
 
-    if format_choice == 'mp4':
-        ydl_opts = {
-            'format': 'best[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
-            'outtmpl': '%(title)s.%(ext)s',
-            'postprocessors': [{
-                'key': 'FFmpegVideoConvertor',
-                'preferedformat': 'mp4',
-            }],
-            'ffmpeg_location': r'C:/ffmpeg-master-latest-win64-gpl/ffmpeg-master-latest-win64-gpl/bin',
-            'noplaylist': True,
-        }
-        
-
-    else:
-        ydl_opts = {
-            'format': 'bestaudio/best',
-            'outtmpl': '%(title)s.%(ext)s',
-            'postprocessors': [{
-                'key': 'FFmpegExtractAudio',
-                'preferredcodec': 'mp3',
-                'preferredquality': '192',
-            }],
-            'ffmpeg_location': r'C:/ffmpeg-master-latest-win64-gpl/ffmpeg-master-latest-win64-gpl/bin',
-            'noplaylist': True,
-        }
-
     try:
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+        with yt_dlp.YoutubeDL() as ydl:
             info_dict = ydl.extract_info(url, download=True)
             file_title = ydl.prepare_filename(info_dict)
-            if format_choice == 'mp4':
-                file_name = file_title.replace('.webm', '.mp4')
-            else:
-                file_name = file_title.replace('.webm', '.mp3')
 
-            if not os.path.exists(file_name) and os.path.exists(file_title):
-                # Fallback to the original filename if conversion didn't happen
-                file_name = file_title
+            if format_choice == 'mp4':
+                clip = VideoFileClip(file_title)
+                file_name = file_title.replace('.webm', '.mp4')
+                clip.write_videofile(file_name, codec='libx264', audio_codec='aac')
+            else:
+                clip = AudioFileClip(file_title)
+                file_name = file_title.replace('.webm', '.mp3')
+                clip.write_audiofile(file_name)
 
             if os.path.exists(file_name):
                 with open(file_name, 'rb') as file:
@@ -101,9 +76,9 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
                         await context.bot.send_audio(chat_id=chat_id, audio=file)
                 os.remove(file_name)
             else:
-                await query.edit_message_text('Не удалос скачать.')
+                await query.edit_message_text('Не удалось скачать.')
     except Exception as e:
-        await query.edit_message_text('Не далось скачать, попробуйте позже.')
+        await query.edit_message_text('Не удалось скачать, попробуйте позже.')
         logger.error(e)
 
 # Function to handle graceful shutdown
@@ -133,6 +108,9 @@ def main() -> None:
 
     # Run the bot until you press Ctrl-C or the process receives SIGINT, SIGTERM or SIGABRT
     application.run_polling()
+
+if __name__ == '__main__':
+    main()
 
 if __name__ == '__main__':
     main()
