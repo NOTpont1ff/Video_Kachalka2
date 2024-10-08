@@ -7,31 +7,24 @@ from telegram.ext import Application, CommandHandler, MessageHandler, ContextTyp
 from yt_dlp import YoutubeDL
 from moviepy.editor import VideoFileClip, AudioFileClip
 
-# Enable logging
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO
 )
 logger = logging.getLogger(__name__)
 
-# Your bot token
 TOKEN = 'YOUR_BOT_TOKEN_HERE'
 
-# Dictionary to store user choices
 user_choices = {}
 
-# Command handler for /start command
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await update.message.reply_text('Пришлите ссылку с ютуба:.')
 
-# Message handler for YouTube links
 async def handle_link(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     url = update.message.text
     chat_id = update.message.chat_id
 
-    # Store the URL for the user
     user_choices[chat_id] = {'url': url}
 
-    # Ask user for the format
     keyboard = [
         [InlineKeyboardButton("MP4", callback_data='mp4')],
         [InlineKeyboardButton("MP3", callback_data='mp3')],
@@ -39,7 +32,6 @@ async def handle_link(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
     reply_markup = InlineKeyboardMarkup(keyboard)
     await update.message.reply_text('Выберите формат:', reply_markup=reply_markup)
 
-# Callback handler for the user's choice
 async def button(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     query = update.callback_query
     await query.answer()
@@ -47,7 +39,6 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     chat_id = query.message.chat_id
     format_choice = query.data
 
-    # Retrieve the stored URL for the user
     url = user_choices.get(chat_id, {}).get('url')
     if not url:
         await query.edit_message_text('Ссылка не найдена.')
@@ -75,7 +66,6 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
                 file_name = file_title.replace('.webm', '.mp3')
 
             if not os.path.exists(file_name) and os.path.exists(file_title):
-                # Fallback to the original filename if conversion didn't happen
                 file_name = file_title
 
             if os.path.exists(file_name):
